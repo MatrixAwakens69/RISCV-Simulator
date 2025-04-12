@@ -1,7 +1,3 @@
-/*
- * Created by He, Hao on 2019-3-25
- */
-
 #include "BranchPredictor.h"
 #include "Debug.h"
 
@@ -82,5 +78,5 @@ std::string BranchPredictor::strategyName() {
     dbgprintf("Unknown Branch Perdiction Strategy!\n");
     break;
   }
-  return "error"; // should not go here
+  return "error";
 }

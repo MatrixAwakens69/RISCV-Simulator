@@ -1,13 +1,3 @@
-/*
- * The branch perdiction module with the following strategies
- *   Always Taken
- *   Always Not Taken
- *   Backward Taken, Forward Not Taken
- *   Branch Prediction Buffer with 2bit history information
- * 
- * Created by He, Hao on 2019-3-25
- */
-
 #ifndef BRANCH_PREDICTOR_H
 #define BRANCH_PREDICTOR_H
 
@@ -16,16 +6,31 @@
 
 const int PRED_BUF_SIZE = 4096;
 
+enum Strategy {
+  AT, // Always Taken
+  NT, // Always Not Taken
+  BTFNT, // Backward Taken, Forward Not Taken
+  BPB, // Branch Prediction Buffer with 2bit history information
+  HCNP,
+};
+
+class BimodalPredictor;
+class TAGEPredictor;
+class PerceptronPredictor;
+class ContextualLLBPredictor;
+class DynamicAllocator;
+
 class BranchPredictor {
 public:
-  enum Strategy {
-    AT, // Always Taken
-    NT, // Always Not Taken
-    BTFNT, // Backward Taken, Forward Not Taken
-    BPB, // Branch Prediction Buffer with 2bit history information
-  } strategy;
+  Strategy strategy;
 
-  BranchPredictor();
+  BimodalPredictor*         l0;
+  TAGEPredictor*            l1;
+  PerceptronPredictor*      l2;
+  ContextualLLBPredictor*   l3;
+  DynamicAllocator*         allocator;
+
+  BranchPredictor(Strategy s = HCNP);
   ~BranchPredictor();
 
   bool predict(uint32_t pc, uint32_t insttype, int64_t op1, int64_t op2,

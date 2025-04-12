@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 
 project(RISCV-Simulator)
 
@@ -14,6 +14,11 @@ add_executable(
     src/Simulator.cpp 
     src/BranchPredictor.cpp 
     src/Cache.cpp
+    src/predictors/BimodalPredictor.cpp
+    src/predictors/ContextualLLBPredictor.cpp
+    src/predictors/DynamicAllocator.cpp
+    src/predictors/PerceptronPredictor.cpp
+    src/predictors/TAGEPredictor.cpp
 )
 
 add_executable(
