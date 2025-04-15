@@ -5,15 +5,16 @@
 #include "predictors/ContextualLLBPredictor.h"
 #include "predictors/DynamicAllocator.h"
 #include "Debug.h"
+#include <iostream>
 
-BranchPredictor::BranchPredictor() {
-    // Initialize the prediction buffer to WEAK_TAKEN
+BranchPredictor::BranchPredictor(int s) {
     for (int i = 0; i < PRED_BUF_SIZE; ++i) {
         this->predbuf[i] = WEAK_TAKEN;
     }
+    strategy = BranchPredictor::Strategy::HCNP;
 
     // Initialize components based on the selected strategy
-    if (strategy == HCNP) {
+    if (strategy == s) {
         l0 = new BimodalPredictor(4096); // 4K entries
         l1 = new TAGEPredictor({4, 8, 16, 32, 64}, 8, 0xFFFF); // tagbits=8, histMask=0xFFFF
         l2 = new PerceptronPredictor(1024, 128); // numPerceptrons=1024, histLen=128
