@@ -1,71 +1,74 @@
 #include "ContextualLLBPredictor.h"
+#include <algorithm>
+#include <cstdlib>
 
-ContextualLLBPredictor::ContextualLLBPredictor(size_t historyLength)
-    : historyLength(historyLength) {}
+ContextualLLBPredictor::ContextualLLBPredictor(size_t historyLength_,
+                                               size_t tableSize_)
+  : historyLength(historyLength_),
+    tableSize(tableSize_),
+    globalLRU(0)
+{
+    mask = static_cast<uint32_t>(tableSize - 1);
+    table.resize(tableSize);
+    for (auto &e : table) {
+        e.tag     = 0;
+        e.history = 0;
+        e.counter = 0;
+        e.lru     = 0;
+    }
+}
 
 ContextualLLBPredictor::~ContextualLLBPredictor() {}
 
-bool ContextualLLBPredictor::predict(uint32_t pc) {
-    auto it = historyTable.find(pc);
-    if (it == historyTable.end()) {
-        return true;
-    }
-    return it->second.counter >= 2;
+bool ContextualLLBPredictor::predict(uint32_t pc, uint64_t contextHash = 0) {
+    uint32_t idx = getIndex(pc, contextHash);
+    const auto &e = table[idx];
+    if (e.tag == (pc & mask))
+        return e.counter >= 0;
+    return true;  // default taken
 }
 
-void ContextualLLBPredictor::update(uint32_t pc, bool taken) {
-    updateHistory(pc, taken);
-    updateCounter(pc, taken);
+void ContextualLLBPredictor::update(uint32_t pc,
+                                    uint64_t contextHash,
+                                    bool taken)
+{
+    ++globalLRU;
+    uint32_t idx = getIndex(pc, contextHash);
+    auto &e = table[idx];
+    uint32_t tag = pc & mask;
+
+    if (e.tag == tag) {
+        // update counter
+        int c = e.counter + (taken ? 1 : -1);
+        e.counter = static_cast<int8_t>(std::max(-4, std::min(3, c)));
+        // update history
+        e.history = static_cast<uint8_t>(
+            ((e.history << 1) | static_cast<uint8_t>(taken))
+            & ((1u << historyLength) - 1));
+        e.lru = globalLRU;
+    } else {
+        // misprediction under default‐taken => allocate
+        if (true != taken) {
+            allocateEntry(idx, tag, taken);
+        }
+    }
 }
 
-int ContextualLLBPredictor::confidence(uint32_t pc) const {
-    auto it = historyTable.find(pc);
-    if (it == historyTable.end()) {
-        return 0;
-    }
-    return it->second.counter;
+int ContextualLLBPredictor::confidence(uint32_t pc,
+                                       uint64_t contextHash) const
+{
+    uint32_t idx = getIndex(pc, contextHash);
+    const auto &e = table[idx];
+    if (e.tag == (pc & mask))
+        return std::abs(e.counter);
+    return 0;
 }
 
 void ContextualLLBPredictor::allocateResources(uint32_t pc) {
-    // Retrieve the branch history for the given PC
-    auto& history = historyTable[pc];
-
-    // Implement a strategy to adjust the counter based on misprediction history
-    // For example, increase the counter for branches that are frequently mispredicted
-    if (history.counter < 3) {
-        history.counter++;
-    } else {
-        history.counter = 3; // Saturate the counter
-    }
-
-    // Optionally, adjust the history length to capture longer branch patterns
-    if (historyLength < 32) {
-        historyLength++;
-    }
-}
-
-uint8_t ContextualLLBPredictor::getHistory(uint32_t pc) const {
-    auto it = historyTable.find(pc);
-    if (it == historyTable.end()) {
-        return 0;
-    }
-    return it->second.history;
-}
-
-void ContextualLLBPredictor::updateHistory(uint32_t pc, bool taken) {
-    auto& entry = historyTable[pc];
-    entry.history = ((entry.history << 1) | static_cast<uint8_t>(taken)) & ((1 << historyLength) - 1);
-}
-
-void ContextualLLBPredictor::updateCounter(uint32_t pc, bool taken) {
-    auto& entry = historyTable[pc];
-    if (taken) {
-        if (entry.counter < 3) {
-            entry.counter++;
-        }
-    } else {
-        if (entry.counter > 0) {
-            entry.counter--;
-        }
-    }
+    uint32_t idx = getIndex(pc, 0);
+    auto &e = table[idx];
+    e.tag     = pc & mask;
+    e.counter = 0;
+    e.history = 0;
+    e.lru     = globalLRU;
 }

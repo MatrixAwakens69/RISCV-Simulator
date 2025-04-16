@@ -14,7 +14,7 @@ BranchPredictor::BranchPredictor() {
     l0 = new BimodalPredictor(4096); // 4K entries
     l1 = new TAGEPredictor(1024, 12, 0xFFFFFFFFu); // tagbits=8, histMask=0xFFFF
     l2 = new PerceptronPredictor(128, 32); // numPerceptrons=128, histLen=32
-    l3 = new ContextualLLBPredictor(512 * 1024); // 512KB backing store
+    l3 = new ContextualLLBPredictor(16, 1 << 16); // 512KB backing store
     allocator = new DynamicAllocator(0.01); // track top 1% mis-predicted branches
 }
 
@@ -112,7 +112,7 @@ void BranchPredictor::update(uint32_t pc, bool taken) {
           l0->update(pc, taken);
           l1->update(pc, taken);
           l2->update(pc, taken);
-          l3->update(pc, taken);
+          l3->update(pc, 0, taken);
       
           if (allocator->shouldReallocate()) {
               allocator->redistribute(l2, l3);
