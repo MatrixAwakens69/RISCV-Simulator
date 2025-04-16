@@ -12,7 +12,7 @@ BranchPredictor::BranchPredictor() {
     }
     
     l0 = new BimodalPredictor(4096); // 4K entries
-    l1 = new TAGEPredictor({2, 4, 8, 16, 32, 64, 128, 256}, 12, 0xFFFFFFFFu); // tagbits=8, histMask=0xFFFF
+    l1 = new TAGEPredictor(1024, 12, 0xFFFFFFFFu); // tagbits=8, histMask=0xFFFF
     l2 = new PerceptronPredictor(128, 32); // numPerceptrons=128, histLen=32
     l3 = new ContextualLLBPredictor(512 * 1024); // 512KB backing store
     allocator = new DynamicAllocator(0.01); // track top 1% mis-predicted branches
