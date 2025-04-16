@@ -22,7 +22,7 @@ public:
     HCNP,
   } strategy;
 
-  BranchPredictor(int s);
+  BranchPredictor();
   ~BranchPredictor();
 
   bool predict(uint32_t pc, uint32_t insttype, int64_t op1, int64_t op2,
@@ -46,6 +46,7 @@ private:
   DynamicAllocator*         allocator;
 
   bool lastPredictedTaken; // for HCNP
+  bool lastTagePred, lastPercPred;
 };
 
 #endif

@@ -5,29 +5,17 @@
 #include "predictors/ContextualLLBPredictor.h"
 #include "predictors/DynamicAllocator.h"
 #include "Debug.h"
-#include <iostream>
 
-BranchPredictor::BranchPredictor(int s) {
+BranchPredictor::BranchPredictor() {
     for (int i = 0; i < PRED_BUF_SIZE; ++i) {
         this->predbuf[i] = WEAK_TAKEN;
     }
-    strategy = BranchPredictor::Strategy::HCNP;
-
-    // Initialize components based on the selected strategy
-    if (strategy == s) {
-        l0 = new BimodalPredictor(4096); // 4K entries
-        l1 = new TAGEPredictor({4, 8, 16, 32, 64}, 8, 0xFFFF); // tagbits=8, histMask=0xFFFF
-        l2 = new PerceptronPredictor(1024, 128); // numPerceptrons=1024, histLen=128
-        l3 = new ContextualLLBPredictor(512 * 1024); // 512KB backing store
-        allocator = new DynamicAllocator(0.01); // track top 1% mis-predicted branches
-    } else {
-        // For other strategies, set pointers to nullptr
-        l0 = nullptr;
-        l1 = nullptr;
-        l2 = nullptr;
-        l3 = nullptr;
-        allocator = nullptr;
-    }
+    
+    l0 = new BimodalPredictor(4096); // 4K entries
+    l1 = new TAGEPredictor({2, 4, 8, 16, 32, 64, 128, 256}, 12, 0xFFFFFFFFu); // tagbits=8, histMask=0xFFFF
+    l2 = new PerceptronPredictor(128, 32); // numPerceptrons=128, histLen=32
+    l3 = new ContextualLLBPredictor(512 * 1024); // 512KB backing store
+    allocator = new DynamicAllocator(0.01); // track top 1% mis-predicted branches
 }
 
 BranchPredictor::~BranchPredictor() {
@@ -64,20 +52,23 @@ bool BranchPredictor::predict(uint32_t pc, uint32_t insttype, int64_t op1,
       }
     }
     case HCNP: {
-      bool p0 = l0->predict(pc);
-      if (l0->confidence(pc) >= 2)
-        return p0;
+        bool p0 = l0->predict(pc);
+        if (l0->confidence(pc) >= 2) {
+            lastPredictedTaken = p0;
+            return p0;
+        }
+    
+        bool tageP = l1->predict(pc);
+        bool percP = l2->predict(pc);
 
-      bool p1 = l1->predict(pc);
-      if (l1->confidence(pc) >= 1)
-        return p1;
-
-      bool p2 = l2->predict(pc);
-      if (l2->confidence(pc) >= 1)
-        return p2;
-
-      bool p3 = l3->predict(pc);
-      return p3;
+        lastTagePred = tageP;
+        lastPercPred = percP;
+    
+        bool useTage = l0->chooseTage(pc);
+        bool finalP = useTage ? tageP : percP;
+    
+        lastPredictedTaken = finalP;
+        return finalP;
     }
     default:
       dbgprintf("Unknown Branch Prediction Strategy!\n");
@@ -113,23 +104,21 @@ void BranchPredictor::update(uint32_t pc, bool taken) {
       }
 
       case HCNP: {
-          // --- 1) Record misprediction for dynamic allocator ---
-          bool predicted = this->lastPredictedTaken;  // must be set in predict()
+          bool predicted = lastPredictedTaken;
           allocator->record(pc, predicted != taken);
-
-          // --- 2) Train/update all levels in parallel (or selectively) ---
+      
+          l0->updateChooser(pc, lastTagePred, lastPercPred, taken);
+      
           l0->update(pc, taken);
           l1->update(pc, taken);
           l2->update(pc, taken);
           l3->update(pc, taken);
-
-          // --- 3) Occasionally rebalance resources to the hardest branches ---
+      
           if (allocator->shouldReallocate()) {
               allocator->redistribute(l2, l3);
           }
           break;
       }
-
       default:
           dbgprintf("Unknown Branch Prediction Strategy in update()!\n");
           break;
