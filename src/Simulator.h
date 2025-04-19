@@ -264,6 +264,9 @@ private:
     uint32_t controlHazardCount;
     uint32_t memoryHazardCount;
 
+    uint32_t predictCount;
+    uint32_t predictLatencyNs;
+
     std::vector<std::string> instRecord;
     std::vector<std::string> regRecord;
 

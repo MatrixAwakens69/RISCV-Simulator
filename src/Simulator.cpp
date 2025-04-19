@@ -3,6 +3,7 @@
  */
 
 #include <cstring>
+#include <chrono>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -658,7 +659,13 @@ void Simulator::decode() {
 
   bool predictedBranch = false;
   if (isBranch(insttype)) {
+    // measure prediction latency
+    auto _t0 = std::chrono::high_resolution_clock::now();
     predictedBranch = this->branchPredictor->predict(this->fReg.pc, insttype, op1, op2, offset);
+    auto _t1 = std::chrono::high_resolution_clock::now();
+    uint64_t _d = std::chrono::duration_cast<std::chrono::nanoseconds>(_t1 - _t0).count();
+    this->history.predictCount++;
+    this->history.predictLatencyNs += _d;
     if (predictedBranch) {
       this->dRegNew.predictedPC = this->fReg.pc + offset;
       this->dRegNew.anotherPC = this->fReg.pc + 4;
@@ -1275,6 +1282,23 @@ void Simulator::printStatistics() {
          this->history.memoryHazardCount);
   printf("-----------------------------------\n");
   //this->memory->printStatistics();
+  uint32_t totalBr = history.predictedBranch + history.unpredictedBranch;
+  double accuracy = totalBr
+    ? (double)history.predictedBranch / (double)totalBr * 100.0
+    : 0.0;
+  double avgLat = history.predictCount
+    ? (double)history.predictLatencyNs / (double)history.predictCount
+    : 0.0;
+  double ipc = history.cycleCount
+    ? (double)history.instCount / (double)history.cycleCount
+    : 0.0;
+  printf("\n=== Branch Predictor Metrics ===\n");
+  printf("  Total Predictions       : %llu\n", (unsigned long long)totalBr);
+  printf("  Correct Predictions     : %u\n", history.predictedBranch);
+  printf("  Mispredictions          : %u\n", history.unpredictedBranch);
+  printf("  Accuracy                : %.2f%%\n", accuracy);
+  printf("  Avg Prediction Latency  : %.2f ns\n", avgLat);
+  printf("  IPC                     : %.2f\n", ipc);
 }
 
 std::string Simulator::getRegInfoStr() {
