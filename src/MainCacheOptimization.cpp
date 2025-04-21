@@ -1,9 +1,3 @@
-/**
- * Entry point for the optimized cache
- *
- * Created by He, Hao at 2019/04/30
- */
-
 #include <cstdint>
 #include <cstdlib>
 #include <fstream>

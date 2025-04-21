@@ -1,9 +1,3 @@
-/*
- * Basic cache simulator
- *
- * Created by He, Hao on 2019-4-27
- */
-
 #ifndef CACHE_H
 #define CACHE_H
 

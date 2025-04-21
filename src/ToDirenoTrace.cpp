@@ -1,9 +1,3 @@
-/*
- * Convert trace to direnoIV trace format
- *
- * Created By He, Hao in 2019/5/2
- */
-
 #include <cstdint>
 #include <fstream>
 #include <iostream>

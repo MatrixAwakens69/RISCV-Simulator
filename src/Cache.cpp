@@ -1,9 +1,3 @@
-/*
- * Implementation of a simple cache simulator
- *
- * Created By He, Hao in 2019-04-27
- */
-
 #include <cstdio>
 #include <cstdlib>
 

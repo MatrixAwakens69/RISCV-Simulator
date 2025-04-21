@@ -1,8 +1,3 @@
-/*
- * A Memory Simulator Similar to X86 Virtual Memory
- * Created by He, Hao at 2019-3-11
- */
-
 #ifndef MEMORY_MANAGER_H
 #define MEMORY_MANAGER_H
 

@@ -1,11 +1,3 @@
-/*
- * The main entry point of single level cache simulator
- * It takes a memory trace as input, and output CSV file containing miss rate
- * under various cache configurations
- *
- * Created by He, Hao at 2019-04-27
- */
-
 #include <cstdint>
 #include <cstdlib>
 #include <fstream>

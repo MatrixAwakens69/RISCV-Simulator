@@ -1,9 +1,3 @@
-/*
- * Main Body for the RISCV Simulator
- *
- * Created by He, Hao at 2019-3-11
- */
-
 #ifndef SIMULATOR_H
 #define SIMULATOR_H
 

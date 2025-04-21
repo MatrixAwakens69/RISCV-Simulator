@@ -1,7 +1,3 @@
-/*
- * Created by He, Hao at 2019-3-11
- */
-
 #include <cstring>
 #include <chrono>
 #include <fstream>
