@@ -59,6 +59,13 @@ bool BranchPredictor::predict(uint32_t pc, uint32_t insttype, int64_t op1,
         }
     
         bool tageP = l1->predict(pc);
+        int tageConf = l1->confidence(pc);
+        if (tageConf == 0) {
+            bool p3 = l3->predict(pc, 0);
+            lastPredictedTaken = p3;
+            return p3;
+        }
+
         bool percP = l2->predict(pc);
 
         lastTagePred = tageP;

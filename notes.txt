@@ -1,0 +1,21 @@
+bash build_sim.sh
+cd build
+
+./Simulator ../riscv-elf/matrixmulti.riscv -b AT
+./Simulator ../riscv-elf/matrixmulti.riscv -b BTFNT
+./Simulator ../riscv-elf/matrixmulti.riscv -b HCNP
+
+./Simulator ../riscv-elf/ackermann.riscv -b AT
+./Simulator ../riscv-elf/ackermann.riscv -b BTFNT
+./Simulator ../riscv-elf/ackermann.riscv -b HCNP
+
+./Simulator ../riscv-elf/quicksort.riscv -b AT
+./Simulator ../riscv-elf/quicksort.riscv -b BTFNT
+./Simulator ../riscv-elf/quicksort.riscv -b HCNP
+
+
+AT (Always Taken): Predicts that every branch will always be taken.
+NT (Never Taken): Predicts that every branch will never be taken.
+BTFNT (Backward Taken, Forward Not Taken): Predicts backward branches (e.g., loops) as taken and forward branches as not taken.
+BPB (Branch Prediction Buffer): Uses a buffer to store branch history and predict outcomes based on past behavior.
+HCNP (Hierarchical Contextual Neural Predictor): An advanced predictor using neural networks and hierarchical context to model complex branch behavior.
