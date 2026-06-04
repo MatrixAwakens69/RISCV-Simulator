@@ -32,19 +32,14 @@ Parameters:
 1. `-v` for verbose output, can redirect output to file for further analysis
 2. `-s` for single step execution, often used in combination with `-v`.
 3. `-d` for creating memory and register history dump in `dump.txt`
-4. `-b` for branch perdiction strategy (default `BTFNT`), accepted parameters are `AT`, `NT`, `BTFNT` and `BPB`.
+4. `-b` for branch perdiction strategy (default `BTFNT`), accepted parameters are `AT`, `NT`, `BTFNT`, `BPB`, and `HCNP`.
    * AT: Always Taken
    * NT: Always Not Taken
    * BTFNT: Back Taken Forward Not Taken
    * BPB: Branch Prediction Buffer (2 bit history information)
+   * HCNP: Hierarchical Contextual Neural Predictor
 
 There are a number of reference RISC-V ELFs and its corresponding assembly code in the `riscv-elf/` folder.
-
-## Documentation (In Chinese)
-
-See the `doc/` folder.
-
-Also, you can see the corresponding [blog](https://hehao98.github.io/posts/2019/03/riscv-simulator/).
 
 
 
